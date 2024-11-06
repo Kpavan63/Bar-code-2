@@ -3,262 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Responsive Barcode Scanner App</title>
-    <!-- Toastr CSS for notifications -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-    <!-- Inline CSS for styling and responsiveness -->
+    <title>Barcode Scanner Example</title>
     <style>
-        /* General styling */
         body {
+            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            font-family: Arial, sans-serif;
-            padding: 20px;
+            justify-content: center;
+            height: 100vh;
             margin: 0;
         }
-
-        h1 {
-            font-size: 1.8rem;
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        #camera-stream {
+        #barcode-scanner {
             width: 100%;
-            max-width: 500px;
-            height: auto;
-            border-radius: 8px;
-            border: 2px solid #ccc;
+            max-width: 600px;
             margin-bottom: 20px;
-            background-color: #eee;
-            display: none; /* Hidden until the button is clicked */
         }
-
-        #result-card {
-            width: 100%;
-            max-width: 500px;
+        .result-card {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 20px;
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-
-        /* Button style */
-        .btn {
-            padding: 10px 20px;
-            font-size: 1rem;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-bottom: 20px;
+        .result-card h3 {
+            margin: 0;
+            font-size: 1.5em;
+            color: #333;
         }
-
-        .btn:hover {
-            background-color: #0056b3;
+        .result-card p {
+            color: #666;
         }
-
-        /* Loading Spinner */
-        #loader {
+        .loader {
             display: none;
-            border: 4px solid #f3f3f3; 
-            border-top: 4px solid #007bff;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             animation: spin 2s linear infinite;
-            margin-bottom: 20px;
         }
-
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        /* Responsive styling */
-        .card {
-            width: 100%;
-            margin-bottom: 10px;
-            border: 1px solid #007bff;
-            border-radius: 8px;
-            background-color: #f8f9fa;
-        }
-
-        .card-body {
-            padding: 15px;
-        }
-
-        .card-title {
-            font-size: 1.2rem;
-            color: #007bff;
-            margin-bottom: 10px;
-        }
-
-        .card-text {
-            font-size: 1rem;
-            color: #555;
-        }
-
-        /* Toastr overrides for better visibility */
-        .toast-top-center {
-            top: 20px;
-        }
     </style>
 </head>
 <body>
+    <h1>Barcode Scanner</h1>
+    <video id="barcode-scanner" width="100%" height="auto" style="border: 1px solid #ccc;"></video>
+    <button id="start-button">Start Scanning</button>
+    <div class="loader" id="loader"></div>
 
-    <h1>Responsive Barcode Scanner App</h1>
-    <!-- Button to start the scanner -->
-    <button class="btn" id="startScannerBtn">Start Scanner</button>
-    
-    <!-- Loading Spinner -->
-    <div id="loader"></div>
+    <div id="product-info" class="result-card" style="display:none;">
+        <h3 id="product-name"></h3>
+        <p id="product-description"></p>
+        <p id="product-price"></p>
+    </div>
 
-    <!-- Video feed for the camera -->
-    <video id="camera-stream" autoplay></video>
-    
-    <!-- Card to display barcode results -->
-    <div id="result-card"></div>
-
-    <!-- Include QuaggaJS for barcode scanning -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-    <!-- Include Toastr for notifications -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-
-    <!-- Inline JavaScript for barcode scanner logic -->
+    <script src="https://unpkg.com/@zxing/library@0.18.3/dist/index.min.js"></script>
     <script>
-        const API_KEY = 'YOUR_UPCITEMDB_API_KEY'; // Replace with your actual API key from UPCItemDB
+        const codeReader = new ZXing.BrowserBarcodeReader();
+        const loader = document.getElementById('loader');
+        const productInfoDiv = document.getElementById('product-info');
+        const productName = document.getElementById('product-name');
+        const productDescription = document.getElementById('product-description');
+        const productPrice = document.getElementById('product-price');
 
-        // Initialize Toastr settings for notifications
-        toastr.options = {
-            "closeButton": true,
-            "progressBar": true,
-            "positionClass": "toast-top-center",
-            "timeOut": "2000"
+        // Sample JSON data simulating API response
+        const products = {
+            "0123456789": {
+                name: "Product 1",
+                description: "This is a description for Product 1.",
+                price: "$10.99"
+            },
+            "9876543210": {
+                name: "Product 2",
+                description: "This is a description for Product 2.",
+                price: "$25.49"
+            }
         };
 
-        // Button click event to start the scanner
-        document.getElementById("startScannerBtn").addEventListener("click", function() {
-            // Show the video element
-            document.getElementById("camera-stream").style.display = "block";
-            // Show the loader while the camera is initializing
-            document.getElementById("loader").style.display = "block";
-            // Start Quagga barcode scanning
-            startBarcodeScanner();
+        // Start barcode scanner when button is clicked
+        document.getElementById('start-button').addEventListener('click', function() {
+            loader.style.display = 'block'; // Show loader
+            codeReader.decodeFromVideoDevice(null, 'barcode-scanner', (result, err) => {
+                if (result) {
+                    const barcode = result.text;
+                    loader.style.display = 'none'; // Hide loader
+                    displayProductInfo(barcode);
+                }
+                if (err) {
+                    loader.style.display = 'none'; // Hide loader on error
+                    console.error(err);
+                }
+            });
         });
 
-        // Function to initialize and start Quagga for barcode scanning
-        function startBarcodeScanner() {
-            // Request access to the user's camera
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                .then(function(stream) {
-                    const videoElement = document.getElementById("camera-stream");
-                    videoElement.srcObject = stream; // Attach the stream to the video element
-                    videoElement.style.display = "block"; // Show the video element
-                    console.log("Camera stream started");
-
-                    // Now start the Quagga barcode scanning process
-                    Quagga.init({
-                        inputStream: {
-                            name: "Live",
-                            type: "LiveStream",
-                            target: videoElement    // Video element for camera feed
-                        },
-                        decoder: {
-                            readers: ["code_128_reader", "ean_reader", "ean_8_reader"] // Barcode types
-                        }
-                    }, function(err) {
-                        if (err) {
-                            console.error("Quagga initialization failed: ", err);
-                            return;
-                        }
-                        console.log("Quagga initialized successfully.");
-                        Quagga.start();
-                    });
-
-                    // Event listener for barcode detection
-                    Quagga.onDetected((data) => {
-                        const barcode = data.codeResult.code;
-                        // Display a Toastr notification for the detected barcode
-                        toastr.success(`Barcode detected: ${barcode}`);
-                        
-                        // Hide the loader
-                        document.getElementById("loader").style.display = "none";
-                        
-                        // Fetch product details from UPCItemDB API
-                        fetchProductDetails(barcode);
-                        
-                        // Stop Quagga temporarily after a scan
-                        Quagga.stop();
-                        
-                        // Restart scanner after a delay for the next scan (optional)
-                        setTimeout(function() {
-                            Quagga.start();
-                        }, 1000);  // Restart scanner after 1 second
-                    });
-                })
-                .catch(function(err) {
-                    console.error("Error accessing camera: ", err);
-                    toastr.error("Error accessing camera.");
-                });
-        }
-
-        // Function to fetch product details using the UPCItemDB API
-        function fetchProductDetails(barcode) {
-            const resultCard = document.getElementById("result-card");
-            const apiUrl = `https://api.upcitemdb.com/prod/trial/lookup?upc=${barcode}&apikey=${API_KEY}`;
-
-            // Fetch product data from API
-            fetch(apiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.items && data.items.length > 0) {
-                        const product = data.items[0];
-                        const productName = product.title || "No title available";
-                        const productDescription = product.description || "No description available";
-                        const productImage = product.images ? product.images[0] : null;
-
-                        // Display the product details in a card format
-                        const card = document.createElement("div");
-                        card.className = "card text-center";
-
-                        const cardBody = document.createElement("div");
-                        cardBody.className = "card-body";
-                        
-                        const cardTitle = document.createElement("h5");
-                        cardTitle.className = "card-title";
-                        cardTitle.textContent = productName;
-                        
-                        const cardText = document.createElement("p");
-                        cardText.className = "card-text";
-                        cardText.textContent = productDescription;
-                        
-                        if (productImage) {
-                            const cardImage = document.createElement("img");
-                            cardImage.src = productImage;
-                            cardImage.alt = "Product image";
-                            cardImage.style.maxWidth = "100%";
-                            cardImage.style.height = "auto";
-                            cardBody.appendChild(cardImage);
-                        }
-                        
-                        cardBody.appendChild(cardTitle);
-                        cardBody.appendChild(cardText);
-                        card.appendChild(cardBody);
-                        
-                        // Clear previous results and add the new card
-                        resultCard.innerHTML = "";  // Clear previous result
-                        resultCard.appendChild(card);
-                    } else {
-                        toastr.error("Product details not found.");
-                    }
-                })
-                .catch(error => {
-                    console.error("Error fetching product details: ", error);
-                    toastr.error("Failed to fetch product details.");
-                });
+        // Display product info based on barcode
+        function displayProductInfo(barcode) {
+            const product = products[barcode];
+            if (product) {
+                productName.textContent = product.name;
+                productDescription.textContent = product.description;
+                productPrice.textContent = product.price;
+                productInfoDiv.style.display = 'block';
+            } else {
+                productName.textContent = 'Product not found';
+                productDescription.textContent = '';
+                productPrice.textContent = '';
+                productInfoDiv.style.display = 'block';
+            }
         }
     </script>
 </body>
