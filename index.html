@@ -129,6 +129,8 @@
 
     <!-- Inline JavaScript for barcode scanner logic -->
     <script>
+        const API_KEY = 'YOUR_UPCITEMDB_API_KEY'; // Replace with your actual API key from UPCItemDB
+
         // Initialize Toastr settings for notifications
         toastr.options = {
             "closeButton": true,
@@ -185,8 +187,8 @@
                         // Hide the loader
                         document.getElementById("loader").style.display = "none";
                         
-                        // Display the barcode details in a card format
-                        displayBarcodeDetails(barcode);
+                        // Fetch product details from UPCItemDB API
+                        fetchProductDetails(barcode);
                         
                         // Stop Quagga temporarily after a scan
                         Quagga.stop();
@@ -203,32 +205,60 @@
                 });
         }
 
-        // Function to display barcode details in card format
-        function displayBarcodeDetails(barcode) {
+        // Function to fetch product details using the UPCItemDB API
+        function fetchProductDetails(barcode) {
             const resultCard = document.getElementById("result-card");
-            
-            // Create a Bootstrap card for the barcode details
-            const card = document.createElement("div");
-            card.className = "card text-center";
+            const apiUrl = `https://api.upcitemdb.com/prod/trial/lookup?upc=${barcode}&apikey=${API_KEY}`;
 
-            const cardBody = document.createElement("div");
-            cardBody.className = "card-body";
-            
-            const cardTitle = document.createElement("h5");
-            cardTitle.className = "card-title";
-            cardTitle.textContent = `Barcode: ${barcode}`;
-            
-            const cardText = document.createElement("p");
-            cardText.className = "card-text";
-            cardText.textContent = "Product details for the scanned barcode will be displayed here.";
-            
-            cardBody.appendChild(cardTitle);
-            cardBody.appendChild(cardText);
-            card.appendChild(cardBody);
-            
-            // Clear previous results and add the new card
-            resultCard.innerHTML = "";  // Clear previous result
-            resultCard.appendChild(card);
+            // Fetch product data from API
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.items && data.items.length > 0) {
+                        const product = data.items[0];
+                        const productName = product.title || "No title available";
+                        const productDescription = product.description || "No description available";
+                        const productImage = product.images ? product.images[0] : null;
+
+                        // Display the product details in a card format
+                        const card = document.createElement("div");
+                        card.className = "card text-center";
+
+                        const cardBody = document.createElement("div");
+                        cardBody.className = "card-body";
+                        
+                        const cardTitle = document.createElement("h5");
+                        cardTitle.className = "card-title";
+                        cardTitle.textContent = productName;
+                        
+                        const cardText = document.createElement("p");
+                        cardText.className = "card-text";
+                        cardText.textContent = productDescription;
+                        
+                        if (productImage) {
+                            const cardImage = document.createElement("img");
+                            cardImage.src = productImage;
+                            cardImage.alt = "Product image";
+                            cardImage.style.maxWidth = "100%";
+                            cardImage.style.height = "auto";
+                            cardBody.appendChild(cardImage);
+                        }
+                        
+                        cardBody.appendChild(cardTitle);
+                        cardBody.appendChild(cardText);
+                        card.appendChild(cardBody);
+                        
+                        // Clear previous results and add the new card
+                        resultCard.innerHTML = "";  // Clear previous result
+                        resultCard.appendChild(card);
+                    } else {
+                        toastr.error("Product details not found.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching product details: ", error);
+                    toastr.error("Failed to fetch product details.");
+                });
         }
     </script>
 </body>
