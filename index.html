@@ -67,7 +67,7 @@
     <script>
         // Sample JSON data simulating product details based on barcode numbers
         const products = {
-            "0123456789": {
+            "8901030987397": {
                 name: "Product 1",
                 description: "This is a description for Product 1.",
                 price: "$10.99"
@@ -91,6 +91,9 @@
                     name: "Live",
                     type: "LiveStream",
                     target: document.querySelector('#barcode-scanner'), // Set the target for the video feed
+                    constraints: {
+                        facingMode: "environment" // Use back camera on mobile devices
+                    }
                 },
                 decoder: {
                     readers: ["code_128_reader", "ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader", "codabar_reader"]
@@ -98,6 +101,7 @@
             }, function(err) {
                 if (err) {
                     console.log("Error initializing Quagga scanner: ", err);
+                    alert('Camera not accessible or scanner failed to start.');
                     return;
                 }
                 console.log("Quagga scanner initialized successfully.");
@@ -109,7 +113,6 @@
                 const barcode = result.codeResult.code;
                 document.getElementById('barcode-number').textContent = barcode;  // Display the barcode number
                 searchProduct(barcode);  // Search for the product based on the barcode
-                Quagga.stop();  // Stop scanning after detecting the barcode
             });
         }
 
