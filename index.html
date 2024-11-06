@@ -32,6 +32,7 @@
             border: 2px solid #ccc;
             margin-bottom: 20px;
             background-color: #eee;
+            display: none; /* Hidden until the button is clicked */
         }
 
         #result-card {
@@ -41,6 +42,22 @@
             flex-direction: column;
             align-items: center;
             margin-top: 20px;
+        }
+
+        /* Button style */
+        .btn {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
         }
 
         /* Responsive styling */
@@ -76,7 +93,13 @@
 <body>
 
     <h1>Responsive Barcode Scanner App</h1>
+    <!-- Button to start the scanner -->
+    <button class="btn" id="startScannerBtn">Start Scanner</button>
+    
+    <!-- Video feed for the camera -->
     <video id="camera-stream"></video>
+    
+    <!-- Card to display barcode results -->
     <div id="result-card"></div>
 
     <!-- Include QuaggaJS for barcode scanning -->
@@ -86,16 +109,25 @@
 
     <!-- Inline JavaScript for barcode scanner logic -->
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            // Initialize Toastr settings for notifications
-            toastr.options = {
-                "closeButton": true,
-                "progressBar": true,
-                "positionClass": "toast-top-center",
-                "timeOut": "2000"
-            };
+        // Initialize Toastr settings for notifications
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-center",
+            "timeOut": "2000"
+        };
 
-            // Initialize Quagga for barcode scanning
+        // Button click event to start the scanner
+        document.getElementById("startScannerBtn").addEventListener("click", function() {
+            // Show the video element
+            document.getElementById("camera-stream").style.display = "block";
+
+            // Start Quagga barcode scanning
+            startBarcodeScanner();
+        });
+
+        // Function to initialize and start Quagga for barcode scanning
+        function startBarcodeScanner() {
             Quagga.init({
                 inputStream: {
                     name: "Live",
@@ -124,7 +156,7 @@
                 // Display the barcode details in a card format
                 displayBarcodeDetails(barcode);
             });
-        });
+        }
 
         // Function to display barcode details in card format
         function displayBarcodeDetails(barcode) {
