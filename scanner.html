@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barcode Scanner</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@zxing/library@0.18.3/dist/index.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -20,9 +22,13 @@
             border: 1px solid #ccc;
             margin-bottom: 20px;
         }
-        #barcode-number {
+        #barcode-result {
             font-size: 1.5em;
             color: #333;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            display: none;
         }
         .loader {
             display: none;
@@ -40,52 +46,45 @@
     </style>
 </head>
 <body>
-    <h1>Scan Barcode</h1>
+    <h1>Barcode Scanner</h1>
     <video id="barcode-scanner" width="100%" height="auto"></video>
     <button id="start-button">Start Scanning</button>
     <div class="loader" id="loader"></div>
-    <div id="barcode-number">Scanned Barcode Number will appear here.</div>
+    <div id="barcode-result">Scanned Barcode: <span id="barcode-number"></span></div>
 
-    <script src="https://unpkg.com/@zxing/library@0.18.3/dist/index.min.js"></script>
     <script>
-        const codeReader = new ZXing.BrowserBarcodeReader();
-        const loader = document.getElementById('loader');
-        const barcodeNumberDiv = document.getElementById('barcode-number');
-        let scanning = false;
+        $(document).ready(function() {
+            const codeReader = new ZXing.BrowserBarcodeReader();
+            const loader = $('#loader');
+            const barcodeResult = $('#barcode-result');
+            const barcodeNumber = $('#barcode-number');
 
-        // Start barcode scanner when button is clicked
-        document.getElementById('start-button').addEventListener('click', function() {
-            if (!scanning) {
-                startScanner();
-            }
+            // Start barcode scanner when button is clicked
+            $('#start-button').on('click', function() {
+                loader.show(); // Show loader
+                codeReader.decodeFromVideoDevice(null, 'barcode-scanner', (result, err) => {
+                    if (result) {
+                        const barcode = result.text;
+                        loader.hide(); // Hide loader
+                        barcodeResult.show(); // Show the result
+                        barcodeNumber.text(barcode); // Display barcode number
+                    }
+                    if (err) {
+                        loader.hide(); // Hide loader on error
+                        console.error(err);
+                    }
+                });
+            });
+
+            // Ensure camera is accessible
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    $('#barcode-scanner')[0].srcObject = stream;
+                })
+                .catch(function(err) {
+                    alert('Error accessing the camera: ' + err);
+                });
         });
-
-        function startScanner() {
-            scanning = true;
-            loader.style.display = 'block'; // Show loader
-
-            // Try to get video input from the camera
-            codeReader.decodeFromVideoDevice(null, 'barcode-scanner', (result, err) => {
-                if (result) {
-                    const barcode = result.text;
-                    loader.style.display = 'none'; // Hide loader
-                    barcodeNumberDiv.textContent = `Scanned Barcode Number: ${barcode}`;
-                }
-                if (err) {
-                    loader.style.display = 'none'; // Hide loader on error
-                    console.error(err);
-                }
-            });
-        }
-
-        // Ensuring camera permission works
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(function(stream) {
-                document.getElementById('barcode-scanner').srcObject = stream;
-            })
-            .catch(function(err) {
-                alert('Error accessing the camera: ' + err);
-            });
     </script>
 </body>
 </html>
