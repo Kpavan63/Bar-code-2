@@ -51,6 +51,12 @@
         .result-card p {
             margin: 5px 0;
         }
+        .result-card img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -62,25 +68,29 @@
         <h3 id="product-name"></h3>
         <p id="product-description"></p>
         <p id="product-price"></p>
+        <img id="product-image" alt="Product Image" />
     </div>
 
     <script>
         // Sample JSON data simulating product details based on barcode numbers
         const products = {
             "8901030987397": {
-                name: "Product 1",
-                description: "This is a description for Product 1.",
-                price: "$10.99"
+                name: "Lipton Honey Lemon Green Tea Bags Box",
+                description: "Here at Lipton, we create award-winning green tea, black tea, ice tea, herbal teas and supplements",
+                price: "150",
+                image: "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcQ60aL7vlviLRvqzoJ5vVSshqJ6fEgapMwlqTBdQmKv0hI7eBSkDFR5Viecj3mX69gM7Of45466u_bgNz6j6YgMyoF-qf2L-JCZT4af8QP_xzncxnWRJx6V"
             },
             "9876543210": {
                 name: "Product 2",
                 description: "This is a description for Product 2.",
-                price: "$25.49"
+                price: "$25.49",
+                image: "https://example.com/images/product2.jpg"
             },
             "1234567890": {
                 name: "Product 3",
                 description: "This is a description for Product 3.",
-                price: "$15.79"
+                price: "$15.79",
+                image: "https://example.com/images/product3.jpg"
             }
         };
 
@@ -123,16 +133,19 @@
             const productName = document.getElementById('product-name');
             const productDescription = document.getElementById('product-description');
             const productPrice = document.getElementById('product-price');
+            const productImage = document.getElementById('product-image');
             
             if (product) {
                 productName.textContent = product.name;
                 productDescription.textContent = product.description;
                 productPrice.textContent = product.price;
+                productImage.src = product.image;  // Set the image URL
                 productInfoDiv.style.display = 'block';  // Show product info
             } else {
                 productName.textContent = 'Product not found';
                 productDescription.textContent = '';
                 productPrice.textContent = '';
+                productImage.src = '';
                 productInfoDiv.style.display = 'block';  // Show message for not found product
             }
         }
