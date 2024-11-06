@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barcode Scanner Example</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -66,67 +67,69 @@
 
     <script src="https://unpkg.com/@zxing/library@0.18.3/dist/index.min.js"></script>
     <script>
-        const codeReader = new ZXing.BrowserBarcodeReader();
-        const loader = document.getElementById('loader');
-        const productInfoDiv = document.getElementById('product-info');
-        const productName = document.getElementById('product-name');
-        const productDescription = document.getElementById('product-description');
-        const productPrice = document.getElementById('product-price');
+        $(document).ready(function() {
+            const codeReader = new ZXing.BrowserBarcodeReader();
+            const loader = $('#loader');
+            const productInfoDiv = $('#product-info');
+            const productName = $('#product-name');
+            const productDescription = $('#product-description');
+            const productPrice = $('#product-price');
 
-        // Sample JSON data simulating API response
-        const products = {
-            "0123456789": {
-                name: "Product 1",
-                description: "This is a description for Product 1.",
-                price: "$10.99"
-            },
-            "9876543210": {
-                name: "Product 2",
-                description: "This is a description for Product 2.",
-                price: "$25.49"
-            }
-        };
+            // Sample JSON data simulating API response
+            const products = {
+                "0123456789": {
+                    name: "Product 1",
+                    description: "This is a description for Product 1.",
+                    price: "$10.99"
+                },
+                "9876543210": {
+                    name: "Product 2",
+                    description: "This is a description for Product 2.",
+                    price: "$25.49"
+                }
+            };
 
-        // Start barcode scanner when button is clicked
-        document.getElementById('start-button').addEventListener('click', function() {
-            loader.style.display = 'block'; // Show loader
-            codeReader.decodeFromVideoDevice(null, 'barcode-scanner', (result, err) => {
-                if (result) {
-                    const barcode = result.text;
-                    loader.style.display = 'none'; // Hide loader
-                    displayProductInfo(barcode);
-                }
-                if (err) {
-                    loader.style.display = 'none'; // Hide loader on error
-                    console.error(err);
-                }
+            // Start barcode scanner when button is clicked
+            $('#start-button').on('click', function() {
+                loader.show(); // Show loader
+                codeReader.decodeFromVideoDevice(null, 'barcode-scanner', (result, err) => {
+                    if (result) {
+                        const barcode = result.text;
+                        loader.hide(); // Hide loader
+                        displayProductInfo(barcode);
+                    }
+                    if (err) {
+                        loader.hide(); // Hide loader on error
+                        console.error(err);
+                    }
+                });
             });
+
+            // Display product info based on barcode
+            function displayProductInfo(barcode) {
+                const product = products[barcode];
+                if (product) {
+                    productName.text(product.name);
+                    productDescription.text(product.description);
+                    productPrice.text(product.price);
+                    productInfoDiv.show();
+                } else {
+                    productName.text('Product not found');
+                    productDescription.text('');
+                    productPrice.text('');
+                    productInfoDiv.show();
+                }
+            }
+
+            // Ensure the camera is accessible
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    $('#barcode-scanner')[0].srcObject = stream;
+                })
+                .catch(function(err) {
+                    alert('Error accessing the camera: ' + err);
+                });
         });
-
-        // Display product info based on barcode
-        function displayProductInfo(barcode) {
-            const product = products[barcode];
-            if (product) {
-                productName.textContent = product.name;
-                productDescription.textContent = product.description;
-                productPrice.textContent = product.price;
-                productInfoDiv.style.display = 'block';
-            } else {
-                productName.textContent = 'Product not found';
-                productDescription.textContent = '';
-                productPrice.textContent = '';
-                productInfoDiv.style.display = 'block';
-            }
-        }
-
-        // Ensure the camera is accessible
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(function(stream) {
-                document.getElementById('barcode-scanner').srcObject = stream;
-            })
-            .catch(function(err) {
-                alert('Error accessing the camera: ' + err);
-            });
     </script>
 </body>
 </html>
