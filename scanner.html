@@ -51,10 +51,20 @@
         const codeReader = new ZXing.BrowserBarcodeReader();
         const loader = document.getElementById('loader');
         const barcodeNumberDiv = document.getElementById('barcode-number');
+        let scanning = false;
 
         // Start barcode scanner when button is clicked
         document.getElementById('start-button').addEventListener('click', function() {
+            if (!scanning) {
+                startScanner();
+            }
+        });
+
+        function startScanner() {
+            scanning = true;
             loader.style.display = 'block'; // Show loader
+
+            // Try to get video input from the camera
             codeReader.decodeFromVideoDevice(null, 'barcode-scanner', (result, err) => {
                 if (result) {
                     const barcode = result.text;
@@ -66,7 +76,16 @@
                     console.error(err);
                 }
             });
-        });
+        }
+
+        // Ensuring camera permission works
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                document.getElementById('barcode-scanner').srcObject = stream;
+            })
+            .catch(function(err) {
+                alert('Error accessing the camera: ' + err);
+            });
     </script>
 </body>
 </html>
