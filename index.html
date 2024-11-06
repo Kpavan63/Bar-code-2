@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Barcode Scanner App</title>
+    <!-- Toastr CSS for notifications -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <!-- Inline CSS for styling and responsiveness -->
+    <style>
+        /* General styling */
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        #camera-stream {
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+            border-radius: 8px;
+            border: 2px solid #ccc;
+            margin-bottom: 20px;
+            background-color: #eee;
+        }
+
+        #result-card {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        /* Responsive styling */
+        .card {
+            width: 100%;
+            margin-bottom: 10px;
+            border: 1px solid #007bff;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+        }
+
+        .card-body {
+            padding: 15px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+
+        .card-text {
+            font-size: 1rem;
+            color: #555;
+        }
+
+        /* Toastr overrides for better visibility */
+        .toast-top-center {
+            top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Responsive Barcode Scanner App</h1>
+    <video id="camera-stream"></video>
+    <div id="result-card"></div>
+
+    <!-- Include QuaggaJS for barcode scanning -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <!-- Include Toastr for notifications -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <!-- Inline JavaScript for barcode scanner logic -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Initialize Toastr settings for notifications
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-center",
+                "timeOut": "2000"
+            };
+
+            // Initialize Quagga for barcode scanning
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.querySelector("#camera-stream")    // Video element for camera feed
+                },
+                decoder: {
+                    readers: ["code_128_reader", "ean_reader", "ean_8_reader"] // Barcode types
+                }
+            }, function(err) {
+                if (err) {
+                    console.error("Quagga initialization failed: ", err);
+                    return;
+                }
+                console.log("Quagga initialized successfully.");
+                Quagga.start();
+            });
+
+            // Event listener for barcode detection
+            Quagga.onDetected((data) => {
+                const barcode = data.codeResult.code;
+                
+                // Display a Toastr notification for the detected barcode
+                toastr.success(`Barcode detected: ${barcode}`);
+                
+                // Display the barcode details in a card format
+                displayBarcodeDetails(barcode);
+            });
+        });
+
+        // Function to display barcode details in card format
+        function displayBarcodeDetails(barcode) {
+            const resultCard = document.getElementById("result-card");
+            
+            // Create a Bootstrap card for the barcode details
+            const card = document.createElement("div");
+            card.className = "card text-center";
+
+            const cardBody = document.createElement("div");
+            cardBody.className = "card-body";
+            
+            const cardTitle = document.createElement("h5");
+            cardTitle.className = "card-title";
+            cardTitle.textContent = `Barcode: ${barcode}`;
+            
+            const cardText = document.createElement("p");
+            cardText.className = "card-text";
+            cardText.textContent = "Product details for the scanned barcode will be displayed here.";
+            
+            cardBody.appendChild(cardTitle);
+            cardBody.appendChild(cardText);
+            card.appendChild(cardBody);
+            
+            // Clear previous results and add the new card
+            resultCard.innerHTML = "";  // Clear previous result
+            resultCard.appendChild(card);
+        }
+    </script>
+</body>
+</html>
