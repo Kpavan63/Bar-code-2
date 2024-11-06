@@ -97,7 +97,7 @@
     <button class="btn" id="startScannerBtn">Start Scanner</button>
     
     <!-- Video feed for the camera -->
-    <video id="camera-stream"></video>
+    <video id="camera-stream" autoplay></video>
     
     <!-- Card to display barcode results -->
     <div id="result-card"></div>
@@ -128,34 +128,48 @@
 
         // Function to initialize and start Quagga for barcode scanning
         function startBarcodeScanner() {
-            Quagga.init({
-                inputStream: {
-                    name: "Live",
-                    type: "LiveStream",
-                    target: document.querySelector("#camera-stream")    // Video element for camera feed
-                },
-                decoder: {
-                    readers: ["code_128_reader", "ean_reader", "ean_8_reader"] // Barcode types
-                }
-            }, function(err) {
-                if (err) {
-                    console.error("Quagga initialization failed: ", err);
-                    return;
-                }
-                console.log("Quagga initialized successfully.");
-                Quagga.start();
-            });
+            // Request access to the user's camera
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then(function(stream) {
+                    const videoElement = document.getElementById("camera-stream");
+                    videoElement.srcObject = stream; // Attach the stream to the video element
+                    videoElement.style.display = "block"; // Show the video element
+                    console.log("Camera stream started");
+                    
+                    // Now start the Quagga barcode scanning process
+                    Quagga.init({
+                        inputStream: {
+                            name: "Live",
+                            type: "LiveStream",
+                            target: videoElement    // Video element for camera feed
+                        },
+                        decoder: {
+                            readers: ["code_128_reader", "ean_reader", "ean_8_reader"] // Barcode types
+                        }
+                    }, function(err) {
+                        if (err) {
+                            console.error("Quagga initialization failed: ", err);
+                            return;
+                        }
+                        console.log("Quagga initialized successfully.");
+                        Quagga.start();
+                    });
 
-            // Event listener for barcode detection
-            Quagga.onDetected((data) => {
-                const barcode = data.codeResult.code;
-                
-                // Display a Toastr notification for the detected barcode
-                toastr.success(`Barcode detected: ${barcode}`);
-                
-                // Display the barcode details in a card format
-                displayBarcodeDetails(barcode);
-            });
+                    // Event listener for barcode detection
+                    Quagga.onDetected((data) => {
+                        const barcode = data.codeResult.code;
+                        
+                        // Display a Toastr notification for the detected barcode
+                        toastr.success(`Barcode detected: ${barcode}`);
+                        
+                        // Display the barcode details in a card format
+                        displayBarcodeDetails(barcode);
+                    });
+                })
+                .catch(function(err) {
+                    console.error("Error accessing camera: ", err);
+                    toastr.error("Error accessing camera.");
+                });
         }
 
         // Function to display barcode details in card format
