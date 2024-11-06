@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barcode Scanner</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://unpkg.com/@zxing/library@0.18.3/dist/index.min.js"></script>
+    <title>Barcode Scanner with QuaggaJS</title>
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,76 +14,65 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            font-size: 2em;
+            color: #333;
         }
         #barcode-scanner {
             width: 100%;
             max-width: 600px;
-            border: 1px solid #ccc;
+            border: 2px solid #ccc;
             margin-bottom: 20px;
         }
         #barcode-result {
             font-size: 1.5em;
             color: #333;
-            padding: 20px;
-            background-color: #f0f0f0;
+            padding: 10px;
+            background-color: #e1e1e1;
             border-radius: 8px;
-            display: none;
-        }
-        .loader {
-            display: none;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 2s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
     <h1>Barcode Scanner</h1>
-    <video id="barcode-scanner" width="100%" height="auto"></video>
-    <button id="start-button">Start Scanning</button>
-    <div class="loader" id="loader"></div>
+    <div id="barcode-scanner"></div>
     <div id="barcode-result">Scanned Barcode: <span id="barcode-number"></span></div>
 
     <script>
-        $(document).ready(function() {
-            const codeReader = new ZXing.BrowserBarcodeReader();
-            const loader = $('#loader');
-            const barcodeResult = $('#barcode-result');
-            const barcodeNumber = $('#barcode-number');
-
-            // Start barcode scanner when button is clicked
-            $('#start-button').on('click', function() {
-                loader.show(); // Show loader
-                codeReader.decodeFromVideoDevice(null, 'barcode-scanner', (result, err) => {
-                    if (result) {
-                        const barcode = result.text;
-                        loader.hide(); // Hide loader
-                        barcodeResult.show(); // Show the result
-                        barcodeNumber.text(barcode); // Display barcode number
-                    }
-                    if (err) {
-                        loader.hide(); // Hide loader on error
-                        console.error(err);
-                    }
-                });
+        // Initialize QuaggaJS Barcode Scanner
+        function startScanner() {
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.querySelector('#barcode-scanner'), // Set the target for the video feed
+                },
+                decoder: {
+                    readers: ["code_128_reader", "ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader", "codabar_reader"]
+                }
+            }, function(err) {
+                if (err) {
+                    console.log("Error initializing Quagga scanner: ", err);
+                    return;
+                }
+                console.log("Quagga scanner initialized successfully.");
+                Quagga.start();
             });
 
-            // Ensure camera is accessible
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function(stream) {
-                    $('#barcode-scanner')[0].srcObject = stream;
-                })
-                .catch(function(err) {
-                    alert('Error accessing the camera: ' + err);
-                });
-        });
+            // Handle the detected barcode result
+            Quagga.onDetected(function(result) {
+                const barcode = result.codeResult.code;
+                document.getElementById('barcode-number').textContent = barcode;  // Display the barcode number
+                // Optionally, stop scanning after the barcode is detected
+                Quagga.stop();
+            });
+        }
+
+        // Start the scanner on page load
+        window.onload = startScanner;
     </script>
 </body>
 </html>
