@@ -60,6 +60,23 @@
             background-color: #0056b3;
         }
 
+        /* Loading Spinner */
+        #loader {
+            display: none;
+            border: 4px solid #f3f3f3; 
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* Responsive styling */
         .card {
             width: 100%;
@@ -96,6 +113,9 @@
     <!-- Button to start the scanner -->
     <button class="btn" id="startScannerBtn">Start Scanner</button>
     
+    <!-- Loading Spinner -->
+    <div id="loader"></div>
+
     <!-- Video feed for the camera -->
     <video id="camera-stream" autoplay></video>
     
@@ -121,7 +141,8 @@
         document.getElementById("startScannerBtn").addEventListener("click", function() {
             // Show the video element
             document.getElementById("camera-stream").style.display = "block";
-
+            // Show the loader while the camera is initializing
+            document.getElementById("loader").style.display = "block";
             // Start Quagga barcode scanning
             startBarcodeScanner();
         });
@@ -135,7 +156,7 @@
                     videoElement.srcObject = stream; // Attach the stream to the video element
                     videoElement.style.display = "block"; // Show the video element
                     console.log("Camera stream started");
-                    
+
                     // Now start the Quagga barcode scanning process
                     Quagga.init({
                         inputStream: {
@@ -158,12 +179,22 @@
                     // Event listener for barcode detection
                     Quagga.onDetected((data) => {
                         const barcode = data.codeResult.code;
-                        
                         // Display a Toastr notification for the detected barcode
                         toastr.success(`Barcode detected: ${barcode}`);
                         
+                        // Hide the loader
+                        document.getElementById("loader").style.display = "none";
+                        
                         // Display the barcode details in a card format
                         displayBarcodeDetails(barcode);
+                        
+                        // Stop Quagga temporarily after a scan
+                        Quagga.stop();
+                        
+                        // Restart scanner after a delay for the next scan (optional)
+                        setTimeout(function() {
+                            Quagga.start();
+                        }, 1000);  // Restart scanner after 1 second
                     });
                 })
                 .catch(function(err) {
