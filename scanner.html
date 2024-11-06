@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barcode Scanner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #barcode-scanner {
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+        #barcode-number {
+            font-size: 1.5em;
+            color: #333;
+        }
+        .loader {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Scan Barcode</h1>
+    <video id="barcode-scanner" width="100%" height="auto"></video>
+    <button id="start-button">Start Scanning</button>
+    <div class="loader" id="loader"></div>
+    <div id="barcode-number">Scanned Barcode Number will appear here.</div>
+
+    <script src="https://unpkg.com/@zxing/library@0.18.3/dist/index.min.js"></script>
+    <script>
+        const codeReader = new ZXing.BrowserBarcodeReader();
+        const loader = document.getElementById('loader');
+        const barcodeNumberDiv = document.getElementById('barcode-number');
+
+        // Start barcode scanner when button is clicked
+        document.getElementById('start-button').addEventListener('click', function() {
+            loader.style.display = 'block'; // Show loader
+            codeReader.decodeFromVideoDevice(null, 'barcode-scanner', (result, err) => {
+                if (result) {
+                    const barcode = result.text;
+                    loader.style.display = 'none'; // Hide loader
+                    barcodeNumberDiv.textContent = `Scanned Barcode Number: ${barcode}`;
+                }
+                if (err) {
+                    loader.style.display = 'none'; // Hide loader on error
+                    console.error(err);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
