@@ -118,6 +118,15 @@
                 productInfoDiv.style.display = 'block';
             }
         }
+
+        // Ensure the camera is accessible
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                document.getElementById('barcode-scanner').srcObject = stream;
+            })
+            .catch(function(err) {
+                alert('Error accessing the camera: ' + err);
+            });
     </script>
 </body>
 </html>
